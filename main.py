@@ -1,6 +1,5 @@
 from skyfield.api import load
 import netCDF4 as nc
-from Trajectory import Trajectory
 import DataLoader
 import Emissions
 import Propogator
@@ -11,14 +10,12 @@ import numpy as np
 def main():
   global tle_expiration
   global df_reentry_tle_mass
-  global trajectory_calculator
   global ts
   global rb_ablation_profile
   global satellite_ablation_profile
 
   #initializing global parameters
   tle_expiration = 5  # 5 days after tle epoch, tle is considered bad
-  trajectory_calculator = Trajectory()
   ts = load.timescale()
   rb_ablation_profile = DataLoader.load_rb_ablation_profile()
   satellite_ablation_profile=DataLoader.load_satellite_ablation_profile()
@@ -38,14 +35,14 @@ def main():
 
 
   # #Compute Total Al Injection for each reentry object
-  title = "Anthropogenic Aluminum Mass Injection per Year: 1957-2021"
-  df_reentry_mass = Emissions.calculate_total_al_injection_per_object(df_reentry_mass, satellite_ablation_profile,  rb_ablation_profile)
-  Plotter.plot_aluminium_per_year_per_kind(df_reentry_mass, title)
+  # title = "Anthropogenic Aluminum Mass Injection per Year: 1957-2021"
+  df_reentry_al_mass = Emissions.calculate_total_al_injection_per_object(df_reentry_mass, satellite_ablation_profile,  rb_ablation_profile)
+  # Plotter.plot_aluminium_per_year_per_kind(df_reentry_mass, title)
   # # #
   # # #Al injection over altitude
-  # altitude_range= np.arange(30,92, 2)
-  # space_debris_contributions= Emissions.track_altitude_injection(altitude_range, df_reentry_mass, satellite_ablation_profile, rb_ablation_profile)
-  # Plotter.plot_mass_injection_over_alt(space_debris_contributions, altitude_range)
+  altitude_range= np.arange(30,92, 2)
+  space_debris_contributions= Emissions.track_altitude_injection(altitude_range, df_reentry_mass, satellite_ablation_profile, rb_ablation_profile, year=2021)
+  Plotter.plot_mass_injection_over_alt(space_debris_contributions, altitude_range, year=2021)
   #
   #Plotter.plot_hist_space_debris_mass(df_reentry_mass)
 
@@ -55,12 +52,6 @@ def main():
   # #normalized_vis_data = pd.read_csv("./normalized_reentry_location_data.csv")
   # print(len(normalized_vis_data['normalized_bins'] ))
   # Plotter.plot_histogram_bubble_over_world_map(normalized_vis_data, "Reentry Locations at 100km Across Equal Area Bins around Globe ")
-
-  #Plot Histogram of TLE Reentry Object Inclinations
-  #Plotter.plot_histogram_TLE_inclinations(df_reentry_tle_mass_data)
-  #Plotter.plot_histogram_TLE_eccentricity(df_reentry_tle_mass_data)
-  # #Determining Emissions
-  # Emissions.determine_emissions(df_reentry_tle_mass, trajectory_calculator, satellite_ablation_profile, rb_ablation_profile, ts)
 
 if __name__ == "__main__":
   main()

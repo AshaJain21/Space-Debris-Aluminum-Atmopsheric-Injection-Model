@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from mpl_toolkits import mplot3d
 import numpy as np
-from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import plotly.express as px
@@ -36,12 +35,21 @@ def plot_Aerospace_data_number_of_reentries_by_year_by_kind(df_aerospace):
     plt.savefig('./aerospace_cords_reentries_by_kind_per_year.png')
     plt.show()
 
-def plot_mass_injection_over_alt(contributions, altitude_range):
+def plot_mass_injection_over_alt(contributions, altitude_range, year=None):
     sat_al_contribution_tonnes = np.divide(contributions[0], 1000)
     rb_al_contribution_tonnes = np.divide(contributions[1], 1000)
 
+    max_altitude = 70
+    number_of_samples_to_include = altitude_range > max_altitude
+
+    sat_al_contribution_tonnes_over_70_km = sat_al_contribution_tonnes[number_of_samples_to_include].sum()
+    rb_al_contribution_tonnes_over_70_km = rb_al_contribution_tonnes[number_of_samples_to_include].sum()
+    mass_over_70_km = sat_al_contribution_tonnes_over_70_km + rb_al_contribution_tonnes_over_70_km
+    print(mass_over_70_km)
     total_decadel_al_injection_from_debris = sum(sat_al_contribution_tonnes) + sum(rb_al_contribution_tonnes)
     print(total_decadel_al_injection_from_debris)
+
+    print(mass_over_70_km / total_decadel_al_injection_from_debris)
 
     labels = altitude_range
     width = 1  # the width of the bars: can also be len(x) sequence
@@ -56,9 +64,13 @@ def plot_mass_injection_over_alt(contributions, altitude_range):
 
     ax.set_xlabel('Altitude (km)', fontsize=15)
     ax.set_ylabel('Injected Aluminum Mass (metric tons)', fontsize=15)
-    ax.set_title('Aluminum Mass Injection over Altitude by Space Debris Kind', fontsize=15, pad=20)
+    if year is not None:
+        title_year = ' in ' + str(year)
+    else:
+        title_year = ''
+    ax.set_title('Aluminum Mass Injection over Altitude by Space Debris Kind' + title_year, fontsize=15, pad=20)
     ax.legend()
-    plt.ylim(0,200)
+    plt.ylim(0,7)
     plt.rcParams.update({'legend.fontsize': 'xx-large'})
     plt.xticks(rotation=270, ha="right", fontsize=15)
     plt.yticks(fontsize=15)
@@ -84,38 +96,6 @@ def plot_trajectory_3Dgrid(geocentric_positions):
     ax.plot3D(x, y, z, 'gray')
     ax.set_title("Trajectory")
     plt.show()
-
-
-def plot_trajectory_overEarth(pos_lats: object, pos_lons: object, pos_alts: object) -> object:
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    # Define lower left, uperright lontitude and lattitude respectively
-    extent = [-180, 180, -90, 90]
-    # Create a basemap instance that draws the Earth layer
-    bm = Basemap(llcrnrlon=extent[0], llcrnrlat=extent[2],
-                 urcrnrlon=extent[1], urcrnrlat=extent[3],
-                 projection='cyl', resolution='l', fix_aspect=False, ax=ax)
-    # Add Basemap to the figure
-    ax.add_collection3d(bm.drawcoastlines(linewidth=0.25))
-    ax.add_collection3d(bm.drawcountries(linewidth=0.35))
-    ax.view_init(azim=230, elev=50)
-    ax.set_xlabel('Longitude (°E)', labelpad=20)
-    ax.set_ylabel('Latitude (°N)', labelpad=20)
-    ax.set_zlabel('Altitude (km)', labelpad=20)
-    # Add meridian and parallel gridlines
-    lon_step = 30
-    lat_step = 30
-    meridians = np.arange(extent[0], extent[1] + lon_step, lon_step)
-    parallels = np.arange(extent[2], extent[3] + lat_step, lat_step)
-    ax.set_yticks(parallels)
-    ax.set_yticklabels(parallels)
-    ax.set_xticks(meridians)
-    ax.set_xticklabels(meridians)
-    ax.set_zlim(0, 120)
-
-    ax.plot(pos_lons, pos_lats, pos_alts)
-    plt.show()
-
 
 def compute_sphere(radius_km):
     theta = np.linspace(0, 2 * np.pi, 100)

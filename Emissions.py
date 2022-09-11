@@ -97,7 +97,7 @@ def determine_mass_fraction_loss_for_altitude_range(altitude_range, debris_type,
   else:
     ablation_profile = rb_ablation_profile.sort_values(by='Altitude')
 
-  for i in range(0, len(altitude_range)):
+  for i in range(0, len(altitude_range) - 1):
     altitude_index = np.argmax(altitude_range[i] < ablation_profile['Altitude'])
     lower_altitude = ablation_profile['Altitude'][altitude_index - 1]
     upper_altitude = ablation_profile['Altitude'][altitude_index]
@@ -106,7 +106,7 @@ def determine_mass_fraction_loss_for_altitude_range(altitude_range, debris_type,
     else:
       mass_fraction_loss = ablation_profile['Al Mass Loss Fraction'][altitude_index]
 
-    mass_fraction_loss_over_altitude_range[i] = mass_fraction_loss
+    mass_fraction_loss_over_altitude_range[i] = mass_fraction_loss * (altitude_range[i+1] - altitude_range[i])
   return mass_fraction_loss_over_altitude_range
 
 def compute_altitude_injection(row, satellite_mass_fraction_loss, rocketbody_mass_fraction_loss):
@@ -161,14 +161,14 @@ def determine_mass_fraction_loss_for_altitude_range(altitude_range, ablation_pro
 
     for i in range(0, len(altitude_range) - 1):
       altitude_index = np.argmax(altitude_range[i] < ablation_profile['Altitude'])
-      lower_altitude = ablation_profile['Altitude'][altitude_index - 1]
-      upper_altitude = ablation_profile['Altitude'][altitude_index]
+      lower_altitude = ablation_profile['Altitude'][altitude_index]
+      upper_altitude = ablation_profile['Altitude'][altitude_index + 1]
       if abs(lower_altitude - altitude_range[i]) < abs(upper_altitude - altitude_range[i]):
-        mass_fraction_loss = ablation_profile['Al Mass Loss Fraction'][altitude_index - 1]
-      else:
         mass_fraction_loss = ablation_profile['Al Mass Loss Fraction'][altitude_index]
+      else:
+        mass_fraction_loss = ablation_profile['Al Mass Loss Fraction'][altitude_index + 1]
 
-      mass_fraction_loss_over_altitude_range[i] = mass_fraction_loss
+      mass_fraction_loss_over_altitude_range[i] = mass_fraction_loss * (altitude_range[i+1] - altitude_range[i])
     return mass_fraction_loss_over_altitude_range
 
 def track_altitude_injection(altitude_range, df_reentry_mass, satellite_ablation_profile, rb_ablation_profile, year=None):
@@ -177,7 +177,7 @@ def track_altitude_injection(altitude_range, df_reentry_mass, satellite_ablation
     rocket_body_al_contribution = np.zeros(len(altitude_range), dtype=np.dtype(float))
 
     if year is not None:
-      df_track = df_reentry_mass.loc[df_reentry_mass['Year'] == year]
+      df_track = df_reentry_mass.loc[df_reentry_mass['Reentry Year'] == year]
 
     satellite_mass_fraction_loss = determine_mass_fraction_loss_for_altitude_range(altitude_range, satellite_ablation_profile)
     rocketbody_mass_fraction_loss = determine_mass_fraction_loss_for_altitude_range(altitude_range, rb_ablation_profile)
